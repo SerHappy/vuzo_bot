@@ -2,17 +2,16 @@ import asyncio
 import nest_asyncio
 import copy
 from aiogram import Bot, types, Dispatcher, executor
-import sqlite3
 import aiogram.utils.markdown as md
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
-# connection = sqlite3.connect("database.db")
-# cursor = connection.cursor()
-
+# Словорь результатов пользователя (предмет:балл)
 user_scores = {}
+# Баллы за индивидуальные достижения
 individual_achievements_value = 0
+# Список специальностей
 universities = [
     [
         "МИРЭА",
@@ -185,6 +184,7 @@ universities = [
         ],
     ],
 ]
+# Список возможных предметов и ДВИ
 subjects = [
     "Математика",
     "Физика",
@@ -199,6 +199,7 @@ subjects = [
     "Химия",
     "Вступительные",
 ]
+# Список университетов в рейтинге QS World University Rankings – 2022
 qs_world_university_rankings_2022 = [
     [
         "Московский государственный университет имени М.В. Ломоносова",
@@ -227,6 +228,7 @@ qs_world_university_rankings_2022 = [
         5,
     ],
 ]
+# Список университетов в рейтинге Times Higher Education World University Rankings – 2022
 times_higher_education_world_university_rankings_2022 = [
     [
         "Московский государственный университет имени М.В. Ломоносова",
@@ -254,12 +256,14 @@ times_higher_education_world_university_rankings_2022 = [
         4,
     ],
 ]
+# Шаблоны сообщений с главными рубриками
 menu_keyboard = (
     types.ReplyKeyboardMarkup(resize_keyboard=True)
     .add(types.KeyboardButton("Калькулятор баллов ЕГЭ 🧮"))
-    .add(types.KeyboardButton("Рейтинг вузов 🔝"))
+    .add(types.KeyboardButton("Рейтинги вузов 🔝"))
     .add(types.KeyboardButton("Тест на профориентацию ℹ️"))
 )
+# Шаблоны сообщений для возврата назад или в меню
 reply_keyboard = (
     types.ReplyKeyboardMarkup(
         resize_keyboard=True,
@@ -267,6 +271,7 @@ reply_keyboard = (
     .add(types.KeyboardButton("Заново"))
     .add(types.KeyboardButton("Главное меню"))
 )
+# Вопросы для теста
 questions = [
     ["Ухаживать за животными.",
         "Обслуживать машины, приборы (следить, регулировать)"],
@@ -309,6 +314,7 @@ questions = [
     ["Вести борьбу с болезнями растений, с вредителями леса, сада.",
      "Работать на машинах (пишущая машина, компьютер, телетайп, телефакс)."],
 ]
+# Словарь результатов теста пользователя (Тип личности:кол-во баллов)
 answers = {
     "Nature": 0,
     "Technics": 0,
@@ -318,6 +324,7 @@ answers = {
 }
 
 
+# Класс хранения состояний для рубрики "Калькулятор ЕГЭ"
 class SubjectScoreForm(StatesGroup):
     amount = State()
     subject = State()
@@ -326,10 +333,12 @@ class SubjectScoreForm(StatesGroup):
     search = State()
 
 
+# Класс хранения состояний для рубрики "Рейтинги вызов"
 class RatingForm(StatesGroup):
     rating = State()
 
 
+# Класс хранения состояний для рубрики "Тест на профориентацию"
 class TestForm(StatesGroup):
     answer1_wait = State()
     answer2_wait = State()
@@ -355,13 +364,13 @@ class TestForm(StatesGroup):
 
 
 async def set_commands(bot: Bot) -> None:
-    """Отображает команды бота в чате при вводе '/'"""
+    """Регистрация команд, отображаемых в интерфейсе Telegram"""
     commands = [
         types.BotCommand(command="/start",
                          description="Привественное сообщение"),
         types.BotCommand(command="/menu", description="Главное меню"),
         types.BotCommand(command="/ege", description="Калькулятор баллов ЕГЭ"),
-        types.BotCommand(command="/rating", description="Рейтинг вузов"),
+        types.BotCommand(command="/rating", description="Рейтинги вузов"),
         types.BotCommand(
             command="/test", description="Тест на определение типа будущей профессии"
         ),
@@ -380,20 +389,35 @@ def auth(func):
     return wrapper
 
 
+async def cancel_state(state=FSMContext):
+    """Сбрасывает состояние и хранящиеся данные"""
+    current_state = await state.get_state()
+    if current_state is not None:
+        await state.finish()
+
+
 @auth
 async def send_welcome_message(message: types.Message) -> None:
     """Отправляет приветственное сообщение"""
+    # Формирование сообщения бота
     await message.answer(
-        f"Привет, {message.from_user.first_name}!\nЯ буду твоим путеводителем в мир вузов.\nВиртуальный помощник ищет образовательные программы высших профессиональный учебных заведений и помогает тебе определиться с местом, где ты проведёшь ближайшие 4 года. Здесь ты найдёшь всю интересующую тебя информацию: от наличия общежитий до проходных баллов.\nПосмотри все мои команды, набрав /menu, или воспользуйся шаблонами ниже, и скорее бери курс на вуз!",
+        (f"Привет, {message.from_user.first_name}!\nЯ буду твоим "
+         "путеводителем в мир вузов.\nВиртуальный помощник ищет "
+         "образовательные программы высших профессиональный учебных "
+         "заведений и помогает тебе определиться с местом, где ты проведёшь "
+         "ближайшие 4 года. Здесь ты найдёшь всю интересующую тебя "
+         "информацию: от наличия общежитий до проходных баллов.\n"
+         "Посмотри все мои команды, набрав /menu, "
+         "или воспользуйся шаблонами ниже, и скорее бери курс на вуз!"),
         reply_markup=menu_keyboard,
     )
 
 
-async def main_menu(message: types.Message, state=FSMContext) -> None:
-    """Позволяет пользователю отменить любое действие и вернуться в главное меню"""
-    current_state = await state.get_state()
-    if current_state is not None:
-        await state.finish()
+async def main_menu(message: types.Message) -> None:
+    """Прекращае любое состояние и показывает главное меню"""
+    # Вызов функции сброса состояния
+    cancel_state()
+    # Формирование сообщения бота
     await message.answer(
         "Команды бота:\n"
         "/start - привественное сообщение\n"
@@ -407,18 +431,15 @@ async def main_menu(message: types.Message, state=FSMContext) -> None:
     )
 
 
-async def start_FSM_for_subject(message: types.Message, state=FSMContext) -> None:
-    """Начало машины состояния для калькулятора ЕГЭ"""
-    # cursor.execute(f"SELECT id FROM user WHERE user_id = {int(message.from_user.id)}")
-    # user_id = cursor.fetchall()[0][0]
-    # connection.execute("PRAGMA foreign_keys = ON")
-    # cursor.execute("DELETE FROM subjects WHERE user_id = (?)", (user_id,))
-    # connection.commit()
+async def start_FSM_for_subject(message: types.Message) -> None:
+    """Начинает машину состояния для Калькулятора ЕГЭ"""
+    # Сброс всех данных о предметах пользователя
     user_scores.clear()
-    current_state = await state.get_state()
-    if current_state is not None:
-        await state.finish()
+    # Вызов функции сброса состояния
+    cancel_state()
+    # Установка состояния в "ожидание ввода кол-ва сданных предметов"
     await SubjectScoreForm.amount.set()
+    # Формирование сообщения бота
     await message.answer(
         "Введи кол-во предметов, которые ты сдавал/ла:",
         reply_markup=types.ReplyKeyboardRemove(),
@@ -426,7 +447,8 @@ async def start_FSM_for_subject(message: types.Message, state=FSMContext) -> Non
 
 
 async def process_amount_invalid(message: types.Message) -> None:
-    """Если количество предметов введено неверно"""
+    """Сообщает об ошибке, если если количество предметов введено неверно"""
+    # Формирование сообщения бота
     await message.answer(
         f"Количество предметов дожно быть в диапозоне от 3 до {len(subjects)}\nВведи корректные данные:"
     )
@@ -436,29 +458,36 @@ async def process_amount(message: types.Message, state=FSMContext) -> None:
     """Обрабатывает количество предметов и запрашивает ввод предмета"""
     async with state.proxy() as data:
         if await state.get_state() == "SubjectScoreForm:amount":
+            # Запись в хранилище данных FSM по ключу amount кол-во предметов, если текущее состояние "ожидание ввода кол-ва предметов"
             data["amount"] = int(message.text)
+    # Формирование шаблонов сообщений, содержащих все предметы, ДВИ и пункт 'Назад в меню'
     subject_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = [
         *subjects,
         "Назад в меню 🔙",
     ]
     subject_keyboard.add(*buttons)
+    # Установка состояния в "ожидание ввода предмета"
     await SubjectScoreForm.subject.set()
+    # Формирование сообщения бота
     await message.answer(
         "Выбери предмет, который ты сдавал:", reply_markup=subject_keyboard
     )
 
 
 async def process_subject_invalid(message: types.Message) -> None:
-    """Если предмет введен неверно"""
+    """Сообщает об ошибке, если предмет введен неверно"""
     return await message.reply("Неверный ввод предмета!\nВведи корректные данные:")
 
 
 async def process_subject(message: types.Message, state=FSMContext) -> None:
     """Обрабатывает введеный предмет и запрашивает ввод баллов"""
     async with state.proxy() as data:
+        # Запись в хранилище данных FSM по ключу subject название предмета
         data["subject"] = message.text
+    # Установка состояния в "ожидание ввода предмета"
     await SubjectScoreForm.score.set()
+    # Формирование сообщения бота
     await message.answer(
         f"Теперь введи свои баллы за предмет {message.text}: ",
         reply_markup=types.ReplyKeyboardRemove(),
@@ -466,136 +495,165 @@ async def process_subject(message: types.Message, state=FSMContext) -> None:
 
 
 async def process_score_invalid(message: types.Message) -> None:
-    """Если баллы введены неверно"""
+    """Сообщает об ошибке, если баллы введены неверно"""
+    # Формирование сообщения бота
     return await message.reply(
         "Баллы должны быть в диапазоне от 0 до 100!\nВведи корректные данные:"
     )
 
 
 async def process_score(message: types.Message, state=FSMContext) -> None:
-    """Обрабатывает введенные баллы за предмет"""
-    # получение баллов из хранилища и добавление их в лок. словарь с ключем subject
+    """Обрабатывает введенные баллы за предмет и, либо выводит сообщение о продолжении, либо сообщает об ошибке и просит начать сначала"""
     async with state.proxy() as data:
+        # Запись в хранилище данных FSM по ключу score количества баллов
         data["score"] = int(message.text)
-    # cursor.execute(f"SELECT id FROM user WHERE user_id = {int(message.from_user.id)}")
-    # user_id = cursor.fetchall()[0][0]
-    # cursor.execute(
-    #     "INSERT INTO subjects (name, score, user_id) VALUES (?, ?, ?)",
-    #     (data["subject"], data["score"], user_id),
-    # )
-    # cursor.execute(f"SELECT MAX(id) FROM subjects")
-    # subject_id = cursor.fetchall()[0][0]
-    # cursor.execute(
-    #     "INSERT INTO user_subjects (user_id, subject_id) VALUES (?, ?)",
-    #     (user_id, subject_id),
-    # )
-    # connection.commit()
+    # Добавление в словарь user_scores пары (Название предмета:кол-во баллов)
     user_scores[data["subject"]] = data["score"]
     if len(user_scores) < data["amount"]:
+        # Установка состояния в "ожидание ввода предмета,
+        # если предметов введено меньше, чем число,
+        # хранящиеся по ключу amount в хранилище данных FSM"
         await SubjectScoreForm.subject.set()
+        # Вызов запрашивания ввода предмета
         await process_amount(message, state=state)
     else:
+        # Формирование шаблонов сообщений путем глубокого копирования reply_keyboard
         keyboard = copy.deepcopy(reply_keyboard)
         if "Математика" in user_scores and "Русский язык" in user_scores:
+            # Если пользователь ввел баллы за два обязательных предмета
+            # (Математика и Русский языкы)
+            # Добалвение еще одного шаблона
             keyboard.add(types.KeyboardButton("Продолжить"))
+            #
             answer = f"Вы можете перейти к подбору факультетов!"
         else:
-            await state.finish()
-            answer = f"Вы должны добавить баллы за обязательные предметы (Математика и Русский язык)"
+            # Вызов функции сброса состояния
+            cancel_state()
+            answer = f"Вы должны добавить баллы за обязательные предметы "
+            "(Математика и Русский язык)"
+        # Формирование сообщения бота
         await message.answer(answer, reply_markup=keyboard)
 
 
-async def process_id_start(message: types.Message, state=FSMContext) -> None:
+async def process_individual_archivments_start(message: types.Message, state=FSMContext) -> None:
     """Запрашивает у пользователя ввод количества дополнительных баллов"""
-    async with state.proxy() as data:
-        data["amount"] = data["amount"]
+    # получение всех данных из хранилища данных FSM
+    data = await state.get_data()
     if (
-        "Математика" in user_scores and "Русский язык" in user_scores and len(
-            user_scores) == data["amount"]):
-        await SubjectScoreForm.next()
+        "Математика" in user_scores and "Русский язык" in user_scores and
+            len(user_scores) == data["amount"]):
+        # Установка состояния "ожидание ввода кол-ва баллов за ИД",
+        # если введены баллы за обязательные предметы и кол-во
+        # введенных предметов равно data["amount"]
+        await SubjectScoreForm.individual_achievements.set()
+        # Формирование ответа
         await message.answer(
             f"Введи кол-во доп. баллов (введи 0, если их нет): ",
             reply_markup=types.ReplyKeyboardRemove(),
         )
     else:
+        # Вызов метода обработки неизвестного текста
         await empty(message)
 
 
-async def process_id_invalid(message: types.Message) -> None:
-    """Если дополнительные баллы введены неверно"""
+async def process_individual_archivments_invalid(message: types.Message) -> None:
+    """Сообщает об ошибке, если дополнительные баллы введены неверно"""
+    # Формирование сообщения бота
     return await message.reply(
         "Доп. баллы должны быть в диапазоне от 0 до 10!\nВведите корректные данные: "
     )
 
 
-async def process_id(message: types.Message, state=FSMContext) -> None:
-    """Обработывает дополнительные баллы"""
+async def process_individual_archivments(message: types.Message, state=FSMContext) -> None:
+    """Обработывает дополнительные баллы и выводит данные пользователя о сданных предметах и ИД"""
     async with state.proxy() as data:
+        # Запись в хранилище данных FSM по ключу individual_achievements_value
+        # количества баллов за ИД
         data["individual_achievements_value"] = int(message.text)
-    # cursor.execute(
-    #     "UPDATE user SET individual_achievements_value = (?) WHERE user_id = (?)",
-    #     (
-    #         data["individual_achievements_value"],
-    #         message.from_user.id,
-    #     ),
-    # )
-    # connection.commit()
     global individual_achievements_value
     individual_achievements_value = data["individual_achievements_value"]
-    await state.finish()
+    # Вызов функции сброса состояния
+    cancel_state()
     answer = f"Добавлено {individual_achievements_value} баллов!"
+    # Формирование первого сообщения бота
     await message.answer(answer)
     answer = f"Текущие введенные значения:\nКоличество предметов: {len(user_scores)}\n"
     total_score = 0
     for subject, score in user_scores.items():
+        # Добавление в переменную answer информации о предмете
         answer += f"Предмет '{subject}', баллов - {score}\n"
+        # Прибавление к переменной общих баллов кол-ва баллов за предмет
         total_score += score
     if individual_achievements_value > 0:
         answer += f"\nКоличество доп. баллов - {individual_achievements_value}"
+        # Прибавление к переменной общих баллов кол-ва баллов за ИД
+        total_score += individual_achievements_value
     answer += f"\nОбщая сумма баллов равна: {total_score+individual_achievements_value}"
+    # Формирование шаблонов сообщений путем глубокого копирования reply_keyboard
     keyboard = copy.deepcopy(reply_keyboard)
+    # Добалвение еще одного шаблона
     keyboard.add(types.KeyboardButton("Подбор факультетов"))
+    # Установка состояния в "ожидание ввода текста 'Подбор факультетов'"
     await SubjectScoreForm.search.set()
+    # Формирование сообщения бота
     await message.answer(answer, reply_markup=keyboard)
 
 
 async def process_search_start(message: types.Message) -> None:
     """Отправка пользователю подходящих факультетов или сообщения об их отсутствии"""
-    # cursor.execute(
-    #     "SELECT subjects_list_id, speciality.id, speciality.name, subject_name FROM speciality_subjects_list INNER JOIN subjects_list_subjects ON subjects_list_subjects.subjects_list = speciality_subjects_list.subjects_list_id INNER JOIN subjects ON subjects.id = subjects_list_subjects.subjects_id INNER JOIN speciality ON speciality.id = speciality_subjects_list.speciality_id"
-    # )
-    # universities_db = cursor.fetchall()
+    # Переменная флаг. True - найден хотя бы 1 факультет, иначе False
     find = False
+    # Проходимся по всем элементам в списке universities
     for university in universities:
+        # Получение иммени университета
         university_name = university[0]
+        # Проходимся по всем спецаильностям университета
         for speciality in university[1]:
+            # Получение имени специальности
             speciality_name = speciality[0]
-            speciality_subjects = []
+            # Получение баллов на бюджет
             speciality_score = speciality[2]
+            # Получение бюджетых мест
             speciality_budget = speciality[3]
+            # Получение цены за платное обучение
             speciality_price = speciality[4]
+            # Проходимся по всем спискам предметов, необходимых для сдачи
             for subjects in speciality[1]:
+                # Получение всех предметов из списка
                 speciality_subjects = subjects
+                # Если все предметы из списка сданы пользователем
                 if set(speciality_subjects).issubset(list(user_scores)):
                     total_score = 0
                     for subject in speciality_subjects:
                         total_score += user_scores[subject]
+                    # Считаем общее кол-во баллов за эти предметы
                     total_score += individual_achievements_value
-                    if total_score >= speciality[2]:
+                    if total_score >= speciality_score:
+                        # Если их больше или они равные баллам для бюджета, то формируем текст с направлением
                         find = True
+                        #
                         unpacked_subjects = ", ".join(speciality_subjects)
-                        text = f"Нашел для тебя подходящий факультет:\nУчебное заведение: {university_name}\nНазвание факультета: {speciality_name}\nПредметы для сдачи: {unpacked_subjects}\nПроходной балл: {speciality_score}\nКоличество бюджетных мест: {speciality_budget}\nСтоимость обучения от: {speciality_price}"
+                        text = (f"Нашел для тебя подходящий факультет:\n"
+                                f"Учебное заведение: {university_name}\n"
+                                f"Название факультета: {speciality_name}\n"
+                                f"Предметы для сдачи: {unpacked_subjects}\n"
+                                f"Проходной балл: {speciality_score}\n"
+                                f"Количество бюджетных мест: {speciality_budget}\n"
+                                f"Стоимость обучения от: {speciality_price}")
     if not find:
+        # Не найдено ни одно подходящее направление
         text = f"К сожалению, мне не удалось найти подходящие факультеты"
+    # Формирование сообщения бота
     await message.answer(text, reply_markup=reply_keyboard)
 
 
-async def start_FSM_for_rating(message: types.Message, state=FSMContext) -> None:
-    """Начало машины состояния для рейтингов вузов"""
-    current_state = await state.get_state()
-    if current_state is not None:
-        await state.finish()
+async def start_FSM_for_rating(message: types.Message) -> None:
+    """Начанает машину состояния для рейтингов вузов"""
+    # Вызов функции сброса состояния
+    cancel_state()
+    # Установка состояния в "Ожидание ввода названия рейтинга"
     await RatingForm.rating.set()
+    # Формирование шаблонов сообщений
     keyboard = types.ReplyKeyboardMarkup(
         resize_keyboard=True, row_width=1
     )
@@ -604,6 +662,7 @@ async def start_FSM_for_rating(message: types.Message, state=FSMContext) -> None
         "Times Higher Education World University Rankings – 2022",
     ]
     keyboard.add(*buttons)
+    # Формирование сообщения бота
     await message.answer(
         "Выбери, какой рейтинг хочешь посмотреть",
         reply_markup=keyboard,
@@ -611,25 +670,31 @@ async def start_FSM_for_rating(message: types.Message, state=FSMContext) -> None
 
 
 async def process_rating_invalid(message: types.Message) -> None:
-    """Если название рейтинга введено неверно"""
+    """Сообщает об ошибке, если название рейтинга введено неверно"""
     return await message.reply(
         "Такого рейтинга у меня нет :(\nВведи корректные данные: "
     )
 
 
 async def process_rating(message: types.Message) -> None:
-    """Обработывает рейтинг вузов"""
-    rng = (
+    """Обработывает название рейтинга вузов и выводит его"""
+    # Проверка, какой рейтинг надо показать
+    rating_to_show = (
         qs_world_university_rankings_2022
         if message.text == "QS World University Rankings – 2022"
         else times_higher_education_world_university_rankings_2022
     )
     answer = f"Рейтинг {message.text}:\n"
-    for rating in rng:
+    # Проходимся по всем спискам рейтинга
+    for rating in rating_to_show:
+        # Получание имени вуза
         university_name = rating[0]
+        # Получение места вуза в мире
         university_global = rating[1]
+        # Получение места вуза в России
         university_local = rating[2]
         answer += f"\n\n{university_name} - {university_global} место в Мире, {university_local} место в России"
+    # Формирование сообщения бота
     await message.answer(
         answer,
         reply_markup=reply_keyboard,
@@ -637,22 +702,29 @@ async def process_rating(message: types.Message) -> None:
 
 
 async def process_answers(message: types.Message, state=FSMContext) -> None:
-    """Обрабатывает все ответы на тесты"""
+    """Обрабатывает ответ на тест и, либо запрашивает слудюущий ответ, либо сообщает о завершении теста"""
     async with state.proxy() as data:
+        # Увеличение значения ключа number в хранилище данных FSM
         data["number"] = data.setdefault("number", 0) + 1
+    # Получение текущего состояния
     current_state = await state.get_state()
     if current_state is None:
+        # Установка состояния в первое состояние класса TestForm
         await TestForm.first()
     else:
+        # Установка состояния в следующее состояние класса TestForm
         await TestForm.next()
+    # Получение текущего состояния
     current_state = await state.get_state()
     if current_state == "TestForm:result":
+        # Формирование завершения теста
         keyboard = copy.deepcopy(reply_keyboard)
         keyboard.add(types.KeyboardButton("Узнать"))
         answer = "Тест завершен!\nСкорее выбирай кнопку 'Узнать'"
+        # Формирование сообщения бота
         await message.answer(answer, reply_markup=keyboard)
     else:
-
+        # Формирование вопроса и пары ответов для теста
         keyboard = types.ReplyKeyboardMarkup(
             resize_keyboard=True, row_width=1
         )
@@ -661,19 +733,20 @@ async def process_answers(message: types.Message, state=FSMContext) -> None:
         ]
         keyboard.add(*buttons)
         if current_state == "TestForm:answer1_wait":
-            await message.answer(
-                "Ответь на вопрос: «Мне нравится…»",
-                reply_markup=keyboard,
-            )
+            # Текст ответа, если состояние "Ожидание первого ответа"
+            answer = "Ответь на вопрос: «Мне нравится…»"
         else:
-            await message.answer(
-                "Принято!\nОтветь на вопрос: «Мне нравится…»",
-                reply_markup=keyboard,
-            )
+            answer = "Принято!\nОтветь на вопрос: «Мне нравится…»"
+        # Формирование сообщения бота
+        await message.answer(
+            answer,
+            reply_markup=keyboard,
+        )
 
 
-async def start_FSM_for_test(message: types.Message, state=FSMContext) -> None:
+async def start_FSM_for_test(message: types.Message) -> None:
     """Начало машины состояния для теста"""
+    # Сброс всех ответов  пользователя на тест
     global answers
     answers = {
         "Nature": 0,
@@ -682,196 +755,293 @@ async def start_FSM_for_test(message: types.Message, state=FSMContext) -> None:
         "Sign System": 0,
         "Artistic Image": 0,
     }
-    current_state = await state.get_state()
-    if current_state is not None:
-        await state.finish()
+    # Вызов функции сброса состояния
+    cancel_state()
+    # Формирование сообщения бота
     await message.answer(
-        "Привет, это тест на профориентацию!\nТест состоит из 20 пар утверждений. Внимательно прочитав оба утверждения, выбери то, которое больше соответствует твоему желанию. Выбор нужно сделать в каждой паре утверждений!\nPS: Для ответов используй предложенные шаблоны сообщений",
+        ("Привет, это тест на профориентацию!\n"
+         "Тест состоит из 20 пар утверждений."
+         "Внимательно прочитав оба утверждения, выбери то, "
+         "которое больше соответствует твоему желанию."
+         "Выбор нужно сделать в каждой паре утверждений!\n"
+         "PS: Для ответов используй предложенные шаблоны сообщений"),
         reply_markup=types.ReplyKeyboardRemove(),
     )
-    await process_answers(message, state)
+    # Вызов функции для формирования первого вопроса
+    await process_answers(message)
 
 
 async def process_answer_1(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 1 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[0][0]:
         answers["Nature"] += 1
     if message.text == questions[0][1]:
         answers["Technics"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_2(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 2 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[1][0]:
         answers["Human"] += 1
     if message.text == questions[1][1]:
         answers["Sign System"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_3(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 3 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[2][0]:
         answers["Artistic Image"] += 1
     if message.text == questions[2][1]:
         answers["Nature"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_4(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 4 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[3][0]:
         answers["Technics"] += 1
     if message.text == questions[3][1]:
         answers["Human"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_5(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 5 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[4][0]:
         answers["Sign System"] += 1
     if message.text == questions[4][1]:
         answers["Artistic Image"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_6(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 6 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[5][0]:
         answers["Nature"] += 1
     if message.text == questions[5][1]:
         answers["Human"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_7(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 7 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[6][0]:
         answers["Artistic Image"] += 1
     if message.text == questions[6][1]:
         answers["Technics"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_8(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 8 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[7][0]:
         answers["Human"] += 1
     if message.text == questions[7][1]:
         answers["Artistic Image"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_9(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 9 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[8][0]:
         answers["Technics"] += 1
     if message.text == questions[8][1]:
         answers["Sign System"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_10(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 10 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[9][0]:
         answers["Nature"] += 1
     if message.text == questions[9][1]:
         answers["Sign System"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_11(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 11 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[10][0]:
         answers["Nature"] += 1
     if message.text == questions[10][1]:
         answers["Technics"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_12(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 12 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[11][0]:
         answers["Human"] += 1
     if message.text == questions[11][1]:
         answers["Sign System"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_13(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 13 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[12][0]:
         answers["Artistic Image"] += 1
     if message.text == questions[12][1]:
         answers["Nature"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_14(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 14 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[13][0]:
         answers["Technics"] += 1
     if message.text == questions[13][1]:
         answers["Human"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_15(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 15 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[14][0]:
         answers["Sign System"] += 1
     if message.text == questions[14][1]:
         answers["Artistic Image"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_16(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 16 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[15][0]:
         answers["Nature"] += 1
     if message.text == questions[15][1]:
         answers["Human"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_17(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 17 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[16][0]:
         answers["Artistic Image"] += 1
     if message.text == questions[16][1]:
         answers["Technics"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_18(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 18 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[17][0]:
         answers["Human"] += 1
     if message.text == questions[17][1]:
         answers["Artistic Image"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_19(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 19 вызов функции для формирования следующего вопроса"""
+    # Обработка ответа на вопрос
     if message.text == questions[18][0]:
         answers["Technics"] += 1
     if message.text == questions[18][1]:
         answers["Sign System"] += 1
+    # Вызов функции для формирования следующего вопроса
     await process_answers(message, state)
 
 
 async def process_answer_20(message: types.Message, state=FSMContext) -> None:
+    """Обработка ответа на вопрос 20 вызов функции для вывода сообщения о завершении теста"""
+    # Обработка ответа на вопрос
     if message.text == questions[19][0]:
         answers["Nature"] += 1
     if message.text == questions[19][1]:
         answers["Sign System"] += 1
+    # Вызов функции для вывода сообщения о завершении теста
     await process_answers(message, state)
 
 
 async def proccess_test_result(message: types.Message) -> None:
+    """Выводит результаты теста"""
+    # Формирование теста ответа бота
     answer = "Ваш результат:\n\n"
-    answer += f"Человек — природа {int((answers['Nature'] * 100)/8)}%\nЧеловек — техника {int((answers['Technics'] * 100)/8)}%\nЧеловек — человек {int((answers['Human'] * 100)/8)}%\nЧеловек — знаковая система {int((answers['Sign System'] * 100)/8)}%\nЧеловек — художественный образ {int((answers['Artistic Image'] * 100)/8)}%"
-    answer += "\n\nЧеловек — природа.\nСюда входят профессии, в которых человек имеет дело с различными явлениями неживой и живой природы, например биолог, географ, геолог, математик, физик, химик и другие профессии, относящиеся к разряду естественных наук."
-    answer += "\n\nЧеловек — техника.\nВ эту группу профессий включены различные виды трудовой деятельности, в которых человек  имеет дело с техникой, её использованием или конструированием, например профессия инженера, оператора, машиниста, механизатора, сварщика и т.п."
-    answer += "\n\nЧеловек — человек.\nСюда включены все виды профессий, предполагающих взаимодействие людей, например политика, религия, педагогика, психология, медицина, торговля, право."
-    answer += "\n\nЧеловек — знаковая система.\nВ эту группу включены профессии, касающиеся создания, изучения и использования различных знаковых систем, например лингвистика, языки математического программирования, способы графического представления результатов наблюдений и т.п."
-    answer += "\n\nЧеловек — художественный образ.\nЭта группа профессий представляет собой различные виды художественно-творческого труда, например литература, музыка, театр, изобразительное искусство."
+    answer += (f"Человек — природа {int((answers['Nature'] * 100)/8)}%\n"
+               f"Человек — техника {int((answers['Technics'] * 100)/8)}%\n"
+               f"Человек — человек {int((answers['Human'] * 100)/8)}%\n"
+               f"Человек — знаковая система "
+               f"{int((answers['Sign System'] * 100)/8)}%\n"
+               f"Человек — художественный образ "
+               f"{int((answers['Artistic Image'] * 100)/8)}%")
+    answer += ("\n\nЧеловек — природа.\n"
+               "Сюда входят профессии, в которых человек имеет дело "
+               "с различными явлениями неживой и живой природы, "
+               "например биолог, географ, геолог, "
+               "математик, физик, химик и другие профессии, "
+               "относящиеся к разряду естественных наук.")
+    answer += ("\n\nЧеловек — техника.\n"
+               "В эту группу профессий включены различные виды трудовой "
+               "деятельности, в которых человек  имеет дело с техникой, "
+               "её использованием или конструированием, например профессия "
+               "инженера, оператора, машиниста, "
+               "механизатора, сварщика и т.п.")
+    answer += ("\n\nЧеловек — человек.\n"
+               "Сюда включены все виды профессий, предполагающих "
+               "взаимодействие людей, например политика, религия, "
+               "педагогика, психология, медицина, торговля, право.")
+    answer += ("\n\nЧеловек — знаковая система.\n"
+               "В эту группу включены профессии, касающиеся создания, "
+               "изучения и использования различных знаковых систем, "
+               "например лингвистика, языки математического "
+               "программирования, способы графического представления "
+               "результатов наблюдений и т.п.")
+    answer += ("\n\nЧеловек — художественный образ.\n"
+               "Эта группа профессий представляет собой различные "
+               "виды художественно-творческого труда, например литература, "
+               "музыка, театр, изобразительное искусство.")
+    # Формирование сообщения бота
     await message.answer(answer, reply_markup=reply_keyboard)
 
 
 async def empty(message: types.Message) -> None:
     """Обрабатывает неотловленные команды/сообщения"""
+    # Формирование сообщения бота
     await message.answer(
         "Неизвестый текст.\nВведите /menu для просмотра всех команд бота"
     )
 
 
 def register_all_handlers(dp: Dispatcher):
-    """Регестрирует хендлеры для каждой функции"""
+    """Регестрирует хэндлеры для каждой функции"""
     dp.register_message_handler(
         send_welcome_message, commands=["start", "help"], state="*"
     )
@@ -964,18 +1134,18 @@ def register_all_handlers(dp: Dispatcher):
         state=SubjectScoreForm.score,
     )
     dp.register_message_handler(
-        process_id_start,
+        process_individual_archivments_start,
         lambda message: message.text == "Продолжить",
         state=SubjectScoreForm.score,
     )
     dp.register_message_handler(
-        process_id_invalid,
+        process_individual_archivments_invalid,
         lambda message: not message.text.isdigit() or (
             int(message.text) < 0 or int(message.text) > 10),
         state=SubjectScoreForm.individual_achievements,
     )
     dp.register_message_handler(
-        process_id,
+        process_individual_archivments,
         lambda message: message.text.isdigit(),
         state=SubjectScoreForm.individual_achievements,
     )
@@ -1135,14 +1305,22 @@ async def main():
     API_TOKEN = "TOKEN"
     storage = MemoryStorage()
 
+    # Объявление и инициализация объектов бота и диспетчера
     bot = Bot(token=API_TOKEN)
     dp = Dispatcher(bot, storage=storage)
+
+    # Регистрация хэндлеров
     register_all_handlers(dp)
+
+    # Установка команд бота
     await set_commands(bot)
+
+    # Запуск пуллинга
     executor.start_polling(dp, skip_updates=True)
-    # connection.close()
 
 
 if __name__ == "__main__":
+    # Выполняется запуск бота, только если файл запускается напрямую,
+    # а не импортируется
     nest_asyncio.apply()
     asyncio.run(main())
