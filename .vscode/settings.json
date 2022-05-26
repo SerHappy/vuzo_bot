@@ -1,6 +1,6 @@
 {
     "editor.wordWrapColumn": 79,
     "git.enabled": false,
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
+    // "python.linting.pylintEnabled": true,
+    // "python.linting.enabled": true,
 }
