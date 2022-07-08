@@ -47,11 +47,11 @@ def reply_keyboard(*args: str) -> ReplyKeyboardMarkup:
     return markup
 
 
-def test_answers_keyboard(*answers: str):
+def test_answers_keyboard(answers: str):
     return _create_markup(answers)
 
 
-def ratings_keyboard(*args: str):
+def ratings_keyboard(args: str):
     markup = _create_markup(subjects)
 
     if args:
@@ -60,7 +60,7 @@ def ratings_keyboard(*args: str):
     return markup
 
 
-def subject_keyboard(*args: str):
+def subject_keyboard(args: str):
     markup = _create_markup(subjects)
 
     if args:

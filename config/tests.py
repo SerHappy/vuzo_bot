@@ -108,6 +108,28 @@ questions = [
         "Работать на машинах (пишущая машина, компьютер, телетайп, телефакс).",
     ],
 ]
+question_answers = [
+    ["Nature", "Technics"],
+    ["Human", "Sign System"],
+    ["Artistic Image", "Nature"],
+    ["Technics", "Human"],
+    ["Sign System", "Artistic Image"],
+    ["Nature", "Human"],
+    ["Artistic Image", "Technics"],
+    ["Human", "Artistic Image"],
+    ["Technics", "Sign System"],
+    ["Nature", "Sign System"],
+    ["Nature", "Technics"],
+    ["Human", "Sign System"],
+    ["Artistic Image", "Nature"],
+    ["Technics", "Human"],
+    ["Sign System", "Artistic Image"],
+    ["Nature", "Human"],
+    ["Artistic Image", "Technics"],
+    ["Human", "Artistic Image"],
+    ["Technics", "Sign System"],
+    ["Nature", "Sign System"],
+]
 # Словарь результатов теста пользователя (Тип личности:кол-во баллов)
 answers = {
     "Nature": 0,
