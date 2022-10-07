@@ -1,6 +1,5 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-
 class SubjectScoreForm(StatesGroup):
     """
     Класс хранения состояний для рубрики "Калькулятор ЕГЭ"

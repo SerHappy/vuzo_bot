@@ -16,11 +16,11 @@ async def start_fsm_for_rating(message: types.Message, state=FSMContext) -> None
     # Установка состояния в "Ожидание ввода названия рейтинга"
     await RatingForm.rating_wait.set()
     # Формирование шаблонов сообщений
-    buttons = [
+    buttons = (
         "QS World University Rankings – 2022",
         "Times Higher Education World University Rankings – 2022",
-    ]
-    keyboard = ratings_keyboard(buttons)
+    )
+    keyboard = ratings_keyboard(*buttons)
     # Формирование сообщения бота
     await message.answer(
         "Выбери, какой рейтинг хочешь посмотреть",

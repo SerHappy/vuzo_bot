@@ -6,7 +6,6 @@ from .common import cancel_state
 from models.ege import SubjectScoreForm
 from config.subjects import subjects
 from config.universities import universities
-import copy
 from handlers.common import empty
 
 
@@ -28,7 +27,7 @@ async def start_fsm_for_subject(message: types.Message, state=FSMContext) -> Non
 async def process_amount_invalid(message: types.Message) -> None:
     """
     Сообщает об ошибке,
-    если если количество предметов введено неверно
+    если количество предметов введено неверно
     """
     # Формирование сообщения бота
     await message.answer(

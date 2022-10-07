@@ -26,7 +26,7 @@ async def send_welcome_message(message: types.Message, state=FSMContext) -> None
             "Посмотри все мои команды, набрав /menu, "
             "или воспользуйся шаблонами ниже, и скорее бери курс на вуз!"
         ),
-        reply_markup=menu_keyboard("dfdfdfd"),
+        reply_markup=menu_keyboard(),
     )
 
 
