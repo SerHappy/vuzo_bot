@@ -1,11 +1,16 @@
+import json
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from config.keyboards.markups import reply_keyboard, subject_keyboard
+from data.parsing.mirea.parsing import get_exams, load_all_directions, get_ids
 from userscore import user_scores
 from .common import cancel_state
 from models.ege import SubjectScoreForm
 from config.subjects import subjects
-from config.universities import universities
+from decouple import config
+import os
+
+# from config.universities import universities
 from handlers.common import empty
 
 
@@ -106,7 +111,7 @@ async def process_score(message: types.Message, state=FSMContext) -> None:
     else:
         # Формирование шаблонов сообщений
         # путем глубокого копирования reply_keyboard
-        if "Математика" in user_scores and "Русский язык" in user_scores:
+        if "Математика (профиль)" in user_scores and "Русский язык" in user_scores:
             # Если пользователь ввел баллы за два обязательных предмета
             # (Математика и Русский языкы)
             # Добалвение еще одного шаблона
@@ -122,6 +127,7 @@ async def process_score(message: types.Message, state=FSMContext) -> None:
                 "Вы должны добавить баллы за обязательные предметы "
                 "(Математика и Русский язык)"
             )
+            keyboard = reply_keyboard()
         # Формирование сообщения бота
         await message.answer(text, reply_markup=keyboard)
 
@@ -135,7 +141,7 @@ async def process_individual_archivments_start(
     # получение всех данных из хранилища данных FSM
     data = await state.get_data()
     if (
-        "Математика" in user_scores
+        "Математика (профиль)" in user_scores
         and "Русский язык" in user_scores
         and len(user_scores) == data["amount"]
     ):
@@ -211,55 +217,49 @@ async def process_search_start(message: types.Message, state=FSMContext) -> None
     individual_achievements_value = data["individual_achievements_value"]
     # Переменная флаг. True - найден хотя бы 1 факультет, иначе False
     find = False
-    # Проходимся по всем элементам в списке universities
-    for university in universities:
-        # Получение иммени университета
-        university_name = university[0]
-        # Проходимся по всем спецаильностям университета
-        for speciality in university[1]:
-            # Получение имени специальности
-            speciality_name = speciality[0]
-            # Получение баллов на бюджет
-            speciality_score = speciality[2]
-            # Получение бюджетых мест
-            speciality_budget = speciality[3]
-            # Получение цены за платное обучение
-            speciality_price = speciality[4]
-            # Проходимся по всем спискам предметов,
-            # необходимых для сдачи
-            for list_of_subjects in speciality[1]:
-                # Получение всех предметов из списка
-                speciality_subjects = list_of_subjects
-                # Если все предметы из списка сданы пользователем
-                if set(speciality_subjects).issubset(list(user_scores)):
-                    total_score = 0
-                    for subject in speciality_subjects:
-                        total_score += user_scores[subject]
-                    # Считаем общее кол-во баллов за эти предметы
-                    total_score += individual_achievements_value
-                    if total_score >= speciality_score:
-                        # Если их больше или они равны
-                        # баллам для бюджета,
-                        # то формируем текст с направлением
-                        find = True
-                        unpacked_subjects = ", ".join(speciality_subjects)
-                        text = (
-                            f"Нашел для тебя подходящий факультет:\n"
-                            f"Учебное заведение: {university_name}\n"
-                            f"Название факультета: {speciality_name}\n"
-                            f"Предметы для сдачи: {unpacked_subjects}\n"
-                            f"Проходной балл: {speciality_score}\n"
-                            f"Количество бюджетных мест: "
-                            f"{speciality_budget}\n"
-                            f"Стоимость обучения от: {speciality_price}"
-                        )
-                        # Формирование сообщения бота
-                        await message.answer(text, reply_markup=reply_keyboard())
+    await message.answer("Идет загрузка, пожалуйста, подождите...")
+    load_all_directions()
+    mirea_ids =get_ids()
+    for direction_id in mirea_ids:
+        direction_file = open(os.path.join(config("PROJECT_DIR"), f"data/parsing/mirea/directions/{direction_id}.json")
+        )
+
+        direction = json.load(direction_file)
+
+        exams = get_exams(direction["guide_exams"])
+
+        if len(set(exams)) != 0 and set(exams).issubset(list(user_scores)):
+            total_score = 0
+            for subject in exams:
+                total_score += user_scores[subject]
+            total_score += individual_achievements_value
+            try:
+                threshold = int(direction["last_year_threshold"])
+            except ValueError:
+                threshold = 0
+            if total_score >= threshold:
+                find = True
+                unpacked_subjects = ", ".join(exams)
+                text = (
+                    f"Нашел для тебя подходящий факультет:\n"
+                    f"Учебное заведение: РТУ МИРЭА\n"
+                    f"Номер направления: {direction['code']}\n"
+                    f"Название факультета: {direction['program']}\n"
+                    f"Предметы для сдачи: {unpacked_subjects}\n"
+                    f"Проходной балл: {'Нет данных' if threshold == 0 else direction['last_year_threshold']}\n"
+                    f"Количество бюджетных мест: "
+                    f"{direction['places_budget']}\n"
+                    f"Стоимость обучения от: {direction['price_special_discount']}"
+                )
+                # Формирование сообщения бота
+                await message.answer(text)
+        direction_file.close()
     if not find:
         # Не найдено ни одно подходящее направление
         text = "К сожалению, мне не удалось найти подходящие факультеты"
         # Формирование сообщения бота
         await message.answer(text, reply_markup=reply_keyboard())
+    await message.answer("Вот все, что я смог найти!", reply_markup=reply_keyboard())
 
 
 def register_ege_handlers(db: Dispatcher):
