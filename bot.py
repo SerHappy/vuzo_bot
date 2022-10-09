@@ -2,11 +2,16 @@ import asyncio
 import nest_asyncio
 from aiogram import Bot, types, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from handlers.common import register_common_handlers, register_empty_handler
-from handlers.ege import register_ege_handlers
-from handlers.ratings import register_ratings_handlers
-from handlers.test import register_test_handlers
+from handlers import common, ege, ratings, test
 from decouple import config
+
+
+async def on_startup(_):
+    print("Бот запущен")
+
+
+async def on_shutdown(_):
+    print("Бот остановлен")
 
 
 async def set_commands(bot: Bot) -> None:
@@ -25,15 +30,15 @@ async def set_commands(bot: Bot) -> None:
 
 def register_all_handlers(dp: Dispatcher):
     """Регестрирует хэндлеры для каждой функции"""
-    register_common_handlers(dp)
-    register_ege_handlers(dp)
-    register_ratings_handlers(dp)
-    register_test_handlers(dp)
-    register_empty_handler(dp)
+    common.register_common_handlers(dp)
+    ege.register_ege_handlers(dp)
+    ratings.register_ratings_handlers(dp)
+    test.register_test_handlers(dp)
+    common.register_empty_handler(dp)
 
 
 async def main():
-    """Главный метод программы. Запускает бота""" 
+    """Главный метод программы. Запускает бота"""
     storage = MemoryStorage()
 
     # Объявление и инициализация объектов бота и диспетчера
@@ -47,7 +52,9 @@ async def main():
     await set_commands(bot)
 
     # Запуск пуллинга
-    executor.start_polling(dispatcher, skip_updates=True)
+    executor.start_polling(
+        dispatcher, skip_updates=True, on_startup=on_startup, on_shutdown=on_shutdown
+    )
 
 
 if __name__ == "__main__":
