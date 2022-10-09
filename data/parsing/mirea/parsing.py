@@ -25,7 +25,7 @@ def _create_ids_file(filename) -> None:
 
 
 def get_ids() -> list:
-    filename = "ids.json"
+    filename = os.path.join(config("PROJECT_DIR"), f"data/parsing/mirea/directions/ids.json.json")
     if not _is_file_exists(filename):
         _create_ids_file(filename)
     with open(filename) as file:
