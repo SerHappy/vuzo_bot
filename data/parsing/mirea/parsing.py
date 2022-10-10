@@ -26,6 +26,7 @@ def create_xlsx_directions(individual_achievements_value: int) -> bool:
     )
     worksheet.write(f"E1", "Количество бюджетных мест")
     worksheet.write(f"F1", "Стоимость обучения от")
+    worksheet.write(f"G1", "Ссылка на страницу направления")
     load_all_directions()
     mirea_ids = get_ids()
     for direction_id in mirea_ids:
@@ -60,10 +61,11 @@ def create_xlsx_directions(individual_achievements_value: int) -> bool:
                 worksheet.write(
                     f"F{rowIndex}", f"{direction['price_special_discount']}"
                 )
+                worksheet.write(f"G{rowIndex}", f"https://priem.mirea.ru/guide-direction?direction_id={direction['id']}")
                 
                 rowIndex += 1
         direction_file.close()
-    worksheet.set_column(f"A:F", 50)
+    worksheet.set_column(f"A:G", 50)
     workbook.close()
     return True if find else False
 
