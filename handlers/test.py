@@ -2,8 +2,8 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from config.keyboards.markups import reply_keyboard, test_answers_keyboard
 from .common import cancel_state
-from models.test import TestForm
-from config.tests import questions,  question_answers
+from FSM.test import TestForm
+from config.tests import questions, question_answers
 
 
 async def start_fsm_for_test(message: types.Message, state=FSMContext) -> None:
@@ -68,17 +68,19 @@ async def process_answer(message: types.Message, state=FSMContext) -> None:
     и вызов функции для формирования следующего вопроса
     """
     async with state.proxy() as data:
-        if message.text in questions[data["number"]-1]:
+        if message.text in questions[data["number"] - 1]:
             # Обработка ответа на вопрос
-            if message.text == questions[data["number"]-1][0]:
-                data[question_answers[data["number"]-1][0]] += 1
-            if message.text == questions[data["number"]-1][1]:
-                data[question_answers[data["number"]-1][1]] += 1
+            if message.text == questions[data["number"] - 1][0]:
+                data[question_answers[data["number"] - 1][0]] += 1
+            if message.text == questions[data["number"] - 1][1]:
+                data[question_answers[data["number"] - 1][1]] += 1
             data["number"] += 1
             # Вызов функции для формирования следующего вопроса
             await process_answers(message, state)
         else:
-            await message.answer("Нет такого варианта ответа! Выберите из предложенных!")
+            await message.answer(
+                "Нет такого варианта ответа! Выберите из предложенных!"
+            )
 
 
 async def proccess_test_result(message: types.Message, state=FSMContext) -> None:

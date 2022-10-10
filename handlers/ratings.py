@@ -6,7 +6,7 @@ from config.ratings import (
     qs_world_university_rankings_2022,
     times_higher_education_world_university_rankings_2022,
 )
-from models.ratings import RatingForm
+from FSM.ratings import RatingForm
 
 
 async def start_fsm_for_rating(message: types.Message, state=FSMContext) -> None:

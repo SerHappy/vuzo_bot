@@ -1,5 +1,7 @@
 import asyncio
+import os
 import nest_asyncio
+from create_database import create_database
 from aiogram import Bot, types, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from handlers.common import register_common_handlers, register_empty_handler
@@ -33,7 +35,7 @@ def register_all_handlers(dp: Dispatcher):
 
 
 async def main():
-    """Главный метод программы. Запускает бота""" 
+    """Главный метод программы. Запускает бота"""
     storage = MemoryStorage()
 
     # Объявление и инициализация объектов бота и диспетчера
@@ -45,6 +47,10 @@ async def main():
 
     # Установка команд бота
     await set_commands(bot)
+
+    db_is_created = os.path.exists("db.sqlite")
+    if not db_is_created:
+        create_database()
 
     # Запуск пуллинга
     executor.start_polling(dispatcher, skip_updates=True)

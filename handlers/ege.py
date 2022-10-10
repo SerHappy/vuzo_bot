@@ -10,7 +10,7 @@ from data.parsing.mirea.parsing import (
 )
 from userscore import user_scores
 from .common import cancel_state
-from models.ege import SubjectScoreForm
+from FSM.ege import SubjectScoreForm
 from config.subjects import subjects
 from decouple import config
 import os
