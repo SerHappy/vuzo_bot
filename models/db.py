@@ -13,3 +13,10 @@ Base = declarative_base()
 def create_db():
     """Создает необходимые таблицы"""
     Base.metadata.create_all(engine)
+
+
+def get_default_repr(attrs):
+    string = "< "
+    for attr in attrs:
+        string += f"{attr=}\n"
+    return string + " >"

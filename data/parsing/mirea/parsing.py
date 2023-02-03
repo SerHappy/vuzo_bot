@@ -2,20 +2,18 @@ from os.path import exists
 import requests
 import json
 from decouple import config
+from models.db import Session
 import os
-from userscore import user_scores
 import xlsxwriter
+from db_utils import get_association_user_subject_all_records_by_id, get_subject_name_by_id, get_User_ege_total_score
 
 
-def create_xlsx_directions(individual_achievements_value: int) -> bool:
+def create_xlsx_directions(user_id) -> bool:
+    session = Session()
     load_all_directions()
     find = False
     rowIndex = 2
-    workbook = xlsxwriter.Workbook(
-        os.path.join(
-            config("PROJECT_DIR"), f"data/parsing/mirea/Факультеты.xlsx"
-        )
-    )
+    workbook = xlsxwriter.Workbook(os.path.join(config("PROJECT_DIR"), f"data/parsing/mirea/Факультеты.xlsx"))
     worksheet = workbook.add_worksheet("Факультеты")
     worksheet.write(f"A1", "Номер направления")
     worksheet.write(f"B1", "Название факультета")
@@ -27,8 +25,16 @@ def create_xlsx_directions(individual_achievements_value: int) -> bool:
     worksheet.write(f"E1", "Количество бюджетных мест")
     worksheet.write(f"F1", "Стоимость обучения от")
     worksheet.write(f"G1", "Ссылка на страницу направления")
-    load_all_directions()
     mirea_ids = get_ids()
+
+    records_list = get_association_user_subject_all_records_by_id(user_id)
+    subjects_list = []
+    for record in records_list:
+        subject_name = get_subject_name_by_id(session, record.subject_id)
+        subjects_list.append(subject_name)
+
+    user_total_score = get_User_ege_total_score(user_id)
+
     for direction_id in mirea_ids:
         direction_file = open(
             os.path.join(
@@ -38,16 +44,13 @@ def create_xlsx_directions(individual_achievements_value: int) -> bool:
         )
         direction = json.load(direction_file)
         exams = get_exams(direction["guide_exams"])
-        if len(set(exams)) != 0 and set(exams).issubset(list(user_scores)):
-            total_score = 0
-            for subject in exams:
-                total_score += user_scores[subject]
-            total_score += individual_achievements_value
+
+        if len(set(exams)) != 0 and set(exams).issubset(subjects_list):
             try:
                 threshold = int(direction["last_year_threshold"])
             except ValueError:
                 threshold = 0
-            if total_score >= threshold:
+            if user_total_score >= threshold:
                 find = True
                 unpacked_subjects = ", ".join(exams)
                 worksheet.write(f"A{rowIndex}", direction["code"])
@@ -57,12 +60,15 @@ def create_xlsx_directions(individual_achievements_value: int) -> bool:
                     f"D{rowIndex}",
                     f"{'Нет данных' if threshold == 0 else direction['last_year_threshold']}",
                 )
-                worksheet.write(f"E{rowIndex}", f"{total_score}")
+                worksheet.write(f"E{rowIndex}", f"{'Нет данных' if direction['places_budget'] == None else direction['places_budget']}",)
                 worksheet.write(
-                    f"F{rowIndex}", f"{direction['price_special_discount']}"
+                    f"F{rowIndex}",
+                    f"{'Нет данных' if direction['price_special_discount'] == None else direction['price_special_discount']}",
                 )
-                worksheet.write(f"G{rowIndex}", f"https://priem.mirea.ru/guide-direction?direction_id={direction['id']}")
-                
+                worksheet.write(
+                    f"G{rowIndex}", f"https://priem.mirea.ru/guide-direction?direction_id={direction['id']}"
+                )
+
                 rowIndex += 1
         direction_file.close()
     worksheet.set_column(f"A:G", 50)
@@ -90,9 +96,7 @@ def _create_ids_file(filename) -> None:
 
 
 def get_ids() -> list:
-    filename = os.path.join(
-        config("PROJECT_DIR"), f"data/parsing/mirea/ids.json"
-    )
+    filename = os.path.join(config("PROJECT_DIR"), f"data/parsing/mirea/ids.json")
     if not _is_file_exists(filename):
         _create_ids_file(filename)
     with open(filename) as file:
@@ -111,16 +115,10 @@ def load_all_directions():
     ids = get_ids()
 
     for id in ids:
-        if exists(
-            os.path.join(
-                config("PROJECT_DIR"), f"data/parsing/mirea/directions/{id}.json"
-            )
-        ):
+        if exists(os.path.join(config("PROJECT_DIR"), f"data/parsing/mirea/directions/{id}.json")):
             continue
 
-        direction = requests.get(
-            f"https://priem.mirea.ru/lk/api/directions/get/{id}"
-        ).json()
+        direction = requests.get(f"https://priem.mirea.ru/lk/api/directions/get/{id}").json()
         with open(
             os.path.join(
                 config("PROJECT_DIR"),

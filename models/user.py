@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, Boolean
 from sqlalchemy.orm import relationship
-from models.db import Base
+from models.db import Base, get_default_repr
+from models.associaton_tables import association_user_subject
 
 
 class User(Base):
@@ -10,11 +11,14 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     telegram_id = Column(Integer, nullable=False)
     telegram_nickname = Column(String(250), nullable=False)
-    score = relationship("EgePointsScore")
+    ege_subjects_number = Column(Integer, default=0)
+    ege_total_score = Column(Integer, default=0)
+    ege_subjects = relationship("Subject", secondary=association_user_subject, back_populates="users")
 
     def __init__(self, telegram_id: int, telegram_nickname: str) -> None:
         self.telegram_id = telegram_id
         self.telegram_nickname = telegram_nickname
 
-    def __repr__(self) -> str:
-        return f"Пользователь [Имя:{self.telegram_nickname}, id в Телеграме: {self.telegram_id}, Администратор:{self.is_admin}]"
+    def __str__(self) -> str:
+        return get_default_repr(self.__table__.columns.keys())
+        # return f"Пользователь [Имя: {self.telegram_nickname}, id в Телеграме: {self.telegram_id}, Администратор: {self.is_admin}]"
