@@ -197,6 +197,7 @@ async def process_individual_archivments(message: types.Message, state=FSMContex
         answer += f"Предмет '{ege_record_subject_name}', баллов - {ege_record.score}\n"
         # Прибавл. к переменной общих баллов кол-ва баллов за предмет
         total_score += ege_record.score
+        print(total_score, state)
     indv_record = get_association_user_subject_indv_record(message.from_user.id)
     if indv_record != None:
         answer += f"Кол-во доп баллов: {indv_record.score}\n"

@@ -30,13 +30,13 @@ class UniversityDirection(Base):
         exams: list[str],
         is_aviable=True,
         threshold=0,
-        description=None,
+        description="No description",
         places_budget=0,
         places_paid=0,
         lower_price=0,
-        link=None,
-        form=None,
-        location=None,
+        link="No link",
+        form="Очная",
+        location="No information",
     ) -> None:
         self.university_id = university_id
         self.number = number

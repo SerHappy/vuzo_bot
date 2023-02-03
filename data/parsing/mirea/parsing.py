@@ -48,9 +48,9 @@ def create_xlsx_directions(user_id) -> bool:
         if len(set(exams)) != 0 and set(exams).issubset(subjects_list):
             try:
                 threshold = int(direction["last_year_threshold"])
-            except ValueError:
-                threshold = 0
-            if user_total_score >= threshold:
+            except (ValueError, TypeError):
+                threshold = "Нет данных"
+            if type(threshold) is int and user_total_score >= threshold:
                 find = True
                 unpacked_subjects = ", ".join(exams)
                 worksheet.write(f"A{rowIndex}", direction["code"])

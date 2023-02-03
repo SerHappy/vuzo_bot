@@ -49,7 +49,7 @@ async def main():
     if not db_is_created:
         create_database()
     else:
-        os.remove("/run/media/serhappy/DATA/Projects/Python/Bots/vuzo_bot/db.sqlite3")
+        os.remove("/run/media/serhappy/Data/Projects/Python/VuzoBot/db.sqlite3")
         create_database()
 
     # Запуск пуллинга
