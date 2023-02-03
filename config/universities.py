@@ -1,5 +1,5 @@
 # Список специальностей
-universities = [
+UNIVERSITIES = [
     [
         "МИРЭА",
         [

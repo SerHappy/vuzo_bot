@@ -3,10 +3,10 @@ from aiogram.dispatcher import FSMContext
 from config.keyboards.markups import reply_keyboard, ratings_keyboard
 from .common import cancel_state
 from config.ratings import (
-    qs_world_university_rankings_2022,
-    times_higher_education_world_university_rankings_2022,
+    QS_WORLD_UNIVERSITY_RANKINGS_2022,
+    TIMES_HIGHER_EDUCATION_WORLD_UNIVERSITY_RANKINGS_2022,
 )
-from models.ratings import RatingForm
+from FSM.ratings import RatingForm
 
 
 async def start_fsm_for_rating(message: types.Message, state=FSMContext) -> None:
@@ -30,18 +30,16 @@ async def start_fsm_for_rating(message: types.Message, state=FSMContext) -> None
 
 async def process_rating_invalid(message: types.Message) -> None:
     """Сообщает об ошибке, если название рейтинга введено неверно"""
-    return await message.reply(
-        "Такого рейтинга у меня нет :(\nВведи корректные данные: "
-    )
+    return await message.reply("Такого рейтинга у меня нет :(\nВведи корректные данные: ")
 
 
 async def process_rating(message: types.Message) -> None:
     """Обработывает название рейтинга вузов и выводит его"""
     # Проверка, какой рейтинг надо показать
     rating_to_show = (
-        qs_world_university_rankings_2022
+        QS_WORLD_UNIVERSITY_RANKINGS_2022
         if message.text == "QS World University Rankings – 2022"
-        else times_higher_education_world_university_rankings_2022
+        else TIMES_HIGHER_EDUCATION_WORLD_UNIVERSITY_RANKINGS_2022
     )
     answer = f"Рейтинг {message.text}:\n"
     # Проходимся по всем спискам рейтинга
@@ -52,11 +50,7 @@ async def process_rating(message: types.Message) -> None:
         university_global = rating[1]
         # Получение места вуза в России
         university_local = rating[2]
-        answer += (
-            f"\n\n{university_name} -"
-            f" {university_global} место в мире,"
-            f" {university_local} место в России"
-        )
+        answer += f"\n\n{university_name} -" f" {university_global} место в мире," f" {university_local} место в России"
     # Формирование сообщения бота
     await message.answer(
         answer,

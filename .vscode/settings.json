@@ -1,6 +1,7 @@
 {
     "editor.wordWrapColumn": 79,
     "git.enabled": false,
+    "python.analysis.typeCheckingMode": "off",
     // "python.linting.pylintEnabled": true,
     // "python.linting.enabled": true,
 }

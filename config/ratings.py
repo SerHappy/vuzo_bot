@@ -1,9 +1,9 @@
-ratings_names = [
+RATINGS_NAMES = [
     "qs_world_university_rankings_2022",
     "times_higher_education_world_university_rankings_2022",
 ]
 # Список университетов в рейтинге QS World University Rankings – 2022
-qs_world_university_rankings_2022 = [
+QS_WORLD_UNIVERSITY_RANKINGS_2022 = [
     [
         "Московский государственный университет имени М.В. Ломоносова",
         78,
@@ -35,15 +35,14 @@ qs_world_university_rankings_2022 = [
 ]
 # Список университетов в рейтинге
 # Times Higher Education World University Rankings – 2022
-times_higher_education_world_university_rankings_2022 = [
+TIMES_HIGHER_EDUCATION_WORLD_UNIVERSITY_RANKINGS_2022 = [
     [
         "Московский государственный университет имени М.В. Ломоносова",
         158,
         1,
     ],
     [
-        "Московский физико-технический институт "
-        "(национальный исследовательский университет)",
+        "Московский физико-технический институт " "(национальный исследовательский университет)",
         "201-250",
         2,
     ],

@@ -1,5 +1,7 @@
 import asyncio
+import os
 import nest_asyncio
+from create_database import create_database
 from aiogram import Bot, types, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from handlers.common import register_common_handlers, register_empty_handler
@@ -16,9 +18,7 @@ async def set_commands(bot: Bot) -> None:
         types.BotCommand(command="/menu", description="Главное меню"),
         types.BotCommand(command="/ege", description="Калькулятор баллов ЕГЭ"),
         types.BotCommand(command="/rating", description="Рейтинги вузов"),
-        types.BotCommand(
-            command="/test", description="Тест на определение типа будущей профессии"
-        ),
+        types.BotCommand(command="/test", description="Тест на определение типа будущей профессии"),
     ]
     await bot.set_my_commands(commands)
 
@@ -33,18 +33,24 @@ def register_all_handlers(dp: Dispatcher):
 
 
 async def main():
-    """Главный метод программы. Запускает бота""" 
-    storage = MemoryStorage()
+    """Главный метод программы. Запускает бота"""
 
     # Объявление и инициализация объектов бота и диспетчера
-    bot = Bot(token=config("BOT_TOKEN", cast=str))
-    dispatcher = Dispatcher(bot, storage=storage)
+    bot = Bot(token=str(config("BOT_TOKEN", cast=str)))
+    dispatcher = Dispatcher(bot, storage=MemoryStorage())
 
     # Регистрация хэндлеров
     register_all_handlers(dispatcher)
 
     # Установка команд бота
     await set_commands(bot)
+
+    db_is_created = os.path.exists("db.sqlite3")
+    if not db_is_created:
+        create_database()
+    else:
+        os.remove("/run/media/serhappy/Data/Projects/Python/VuzoBot/db.sqlite3")
+        create_database()
 
     # Запуск пуллинга
     executor.start_polling(dispatcher, skip_updates=True)
