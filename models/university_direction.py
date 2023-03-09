@@ -8,10 +8,13 @@ class UniversityDirection(Base):
 
     id = Column(Integer, primary_key=True)
     university_id = Column(ForeignKey("university.id"), nullable=False)
-    university = relationship("University", back_populates="university_directions")
+    university = relationship(
+        "University", back_populates="university_directions"
+    )
     number = Column(String(8), nullable=False)
     is_aviable = Column(Boolean, nullable=False, default=True)
     name = Column(String(250), nullable=False)
+    level = Column(String(250), nullable=False)
     exams = Column(String(250), nullable=False)
     threshold = Column(Integer, default=0)
     description = Column(Text, nullable=True, default="No description")
@@ -27,6 +30,7 @@ class UniversityDirection(Base):
         university_id,
         number,
         name,
+        level,
         exams: list[str],
         is_aviable=True,
         threshold=0,
@@ -42,7 +46,8 @@ class UniversityDirection(Base):
         self.number = number
         self.is_aviable = is_aviable
         self.name = name
-        self.exams = ",".join(exams)
+        self.level = level
+        self.exams = exams
         self.threshold = threshold
         self.description = description
         self.places_budget = places_budget
@@ -53,6 +58,6 @@ class UniversityDirection(Base):
         self.location = location
 
     def __str__(self):
-        string = f"Направление.\n"
+        string = "Направление.\n"
         for attr in self.__table__.columns.keys():
             string += f"{attr=}\n"

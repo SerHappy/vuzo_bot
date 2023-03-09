@@ -78,10 +78,14 @@ async def process_answer(message: types.Message, state=FSMContext) -> None:
             # Вызов функции для формирования следующего вопроса
             await process_answers(message, state)
         else:
-            await message.answer("Нет такого варианта ответа! Выберите из предложенных!")
+            await message.answer(
+                "Нет такого варианта ответа! Выберите из предложенных!"
+            )
 
 
-async def proccess_test_result(message: types.Message, state=FSMContext) -> None:
+async def proccess_test_result(
+    message: types.Message, state=FSMContext
+) -> None:
     """Выводит результаты теста"""
     data = await state.get_data()
     # Формирование теста ответа бота
@@ -90,9 +94,9 @@ async def proccess_test_result(message: types.Message, state=FSMContext) -> None
         f"Человек — природа {int((data['Nature'] * 100)/8)}%\n"
         f"Человек — техника {int((data['Technics'] * 100)/8)}%\n"
         f"Человек — человек {int((data['Human'] * 100)/8)}%\n"
-        f"Человек — знаковая система "
+        "Человек — знаковая система "
         f"{int((data['Sign System'] * 100)/8)}%\n"
-        f"Человек — художественный образ "
+        "Человек — художественный образ "
         f"{int((data['Artistic Image'] * 100)/8)}%"
     )
     answer += (

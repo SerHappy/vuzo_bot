@@ -1,5 +1,5 @@
-from sqlalchemy import Column, ForeignKey, String, Integer
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy import Column, String, Integer
+from sqlalchemy.orm import relationship, mapped_column
 
 from models.db import Base, get_default_repr
 
@@ -14,7 +14,5 @@ class Rating(Base):
     def __init__(self, rating_name: Column[str]) -> None:
         self.rating_name = rating_name
 
-    # def __str__(self) -> str:
-    #     return f"<Рейтинг [Название: {self.rating_name}]>"
     def __str__(self) -> str:
         return get_default_repr(self.__table__.columns.keys())

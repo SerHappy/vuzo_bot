@@ -9,7 +9,9 @@ from config.ratings import (
 from FSM.ratings import RatingForm
 
 
-async def start_fsm_for_rating(message: types.Message, state=FSMContext) -> None:
+async def start_fsm_for_rating(
+    message: types.Message, state=FSMContext
+) -> None:
     """Начанает машину состояния для рейтингов вузов"""
     # Вызов функции сброса состояния
     await cancel_state(state)
@@ -30,7 +32,9 @@ async def start_fsm_for_rating(message: types.Message, state=FSMContext) -> None
 
 async def process_rating_invalid(message: types.Message) -> None:
     """Сообщает об ошибке, если название рейтинга введено неверно"""
-    return await message.reply("Такого рейтинга у меня нет :(\nВведи корректные данные: ")
+    return await message.reply(
+        "Такого рейтинга у меня нет :(\nВведи корректные данные: "
+    )
 
 
 async def process_rating(message: types.Message) -> None:
@@ -50,7 +54,11 @@ async def process_rating(message: types.Message) -> None:
         university_global = rating[1]
         # Получение места вуза в России
         university_local = rating[2]
-        answer += f"\n\n{university_name} -" f" {university_global} место в мире," f" {university_local} место в России"
+        answer += (
+            f"\n\n{university_name} -"
+            f" {university_global} место в мире,"
+            f" {university_local} место в России"
+        )
     # Формирование сообщения бота
     await message.answer(
         answer,

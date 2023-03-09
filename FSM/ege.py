@@ -1,9 +1,11 @@
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
+
 class SubjectScoreForm(StatesGroup):
     """
     Класс хранения состояний для рубрики "Калькулятор ЕГЭ"
     """
+
     amount_wait = State()
     subject_wait = State()
     score_wait = State()

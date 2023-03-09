@@ -4,7 +4,7 @@
 
 ## Пример работы бота
 
-https://user-images.githubusercontent.com/57107119/194652595-958ac354-e1c2-4508-b676-f7443d89d5bf.mp4
+<https://user-images.githubusercontent.com/57107119/194652595-958ac354-e1c2-4508-b676-f7443d89d5bf.mp4>
 
 ## Функции на данный момент
 
@@ -14,8 +14,7 @@ https://user-images.githubusercontent.com/57107119/194652595-958ac354-e1c2-4508-
 
 - Тест на проф. ориентацию
 
-
-## Планируется...
+## Планируется
 
 - Интегрировать базу данных для хранения
 

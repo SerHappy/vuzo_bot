@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, ForeignKey
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy.orm import relationship, mapped_column
 from models.db import Base, get_default_repr
 
 
@@ -14,7 +14,11 @@ class RatingItem(Base):
     rating = relationship("Rating", back_populates="rating_item")
 
     def __init__(
-        self, university_name: Column[str], world_rank: Column[str], local_rank: Column[str], rating_id: Column[int]
+        self,
+        university_name: Column[str],
+        world_rank: Column[str],
+        local_rank: Column[str],
+        rating_id: Column[int],
     ) -> None:
         self.university_name = university_name
         self.world_rank = world_rank
@@ -22,5 +26,4 @@ class RatingItem(Base):
         self.rating_id = rating_id
 
     def __str__(self) -> str:
-        #     return f"Элемент рейтинга [Университет:{self.university_name}, Мировой рейтинг: {self.world_rank}, Локальный рейтинг:{self.local_rank}]"
         return get_default_repr(self.__table__.columns.keys())

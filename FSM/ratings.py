@@ -7,4 +7,3 @@ class RatingForm(StatesGroup):
     """
 
     rating_wait = State()
-

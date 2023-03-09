@@ -1,10 +1,10 @@
+from data.directions.mirea_directions import load_mirea_directions
 from models.db import create_db, Session
 
 from models.rating import Rating
 from models.subject import Subject
 from models.rating_item import RatingItem
 from models.university import University
-from models.university_direction import UniversityDirection
 
 from config.subjects import subjects
 from config.ratings import (
@@ -14,12 +14,15 @@ from config.ratings import (
 )
 
 
-def create_database():
+def create_database() -> None:
+    """Create database with data"""
     create_db()
-    load_data(Session())
+    load_data()
 
 
-def load_data(session):
+def load_data() -> None:
+    """Load data into database"""
+    session = Session()
     for subject in subjects:
         sb = Subject(subject)
         session.add(sb)
@@ -32,26 +35,15 @@ def load_data(session):
     session.add(
         University(
             "РТУ МИРЭА",
-            "высшее учебное заведение в Москве, которое образовано в 2015 году в результате объединения МИРЭА, МГУПИ, МИТХТ имени М. В. Ломоносова и ряда образовательных, научных, конструкторских и производственных организаций.",
+            (
+                "высшее учебное заведение в Москве, которое образовано в 2015"
+                " году в результате объединения МИРЭА, МГУПИ, МИТХТ имени"
+                " М. В. Ломоносова и ряда образовательных, научных,"
+                " конструкторских и производственных организаций."
+            ),
             "https://www.mirea.ru/",
         )
     )
-    session.add(
-        UniversityDirection(
-            university_id=1,
-            number="09.03.03",
-            name="Прикладная информатика",
-            exams=["Математика (профиль), Русский язык, ИНформатика и ИКТ"],
-            is_aviable=True,
-            threshold=243,
-            description="No description",
-            places_budget=188,
-            places_paid=230,
-            lower_price=212800,
-            link="No link",
-            form="Очная",
-            location="Москва",
-        )
-    )
+    load_mirea_directions()
     session.commit()
     session.close()

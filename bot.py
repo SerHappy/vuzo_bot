@@ -14,11 +14,16 @@ from decouple import config
 async def set_commands(bot: Bot) -> None:
     """Регистрация команд, отображаемых в интерфейсе Telegram"""
     commands = [
-        types.BotCommand(command="/start", description="Привественное сообщение"),
+        types.BotCommand(
+            command="/start", description="Привественное сообщение"
+        ),
         types.BotCommand(command="/menu", description="Главное меню"),
         types.BotCommand(command="/ege", description="Калькулятор баллов ЕГЭ"),
         types.BotCommand(command="/rating", description="Рейтинги вузов"),
-        types.BotCommand(command="/test", description="Тест на определение типа будущей профессии"),
+        types.BotCommand(
+            command="/test",
+            description="Тест на определение типа будущей профессии",
+        ),
     ]
     await bot.set_my_commands(commands)
 
@@ -45,11 +50,12 @@ async def main():
     # Установка команд бота
     await set_commands(bot)
 
+    # Создание базы данных
     db_is_created = os.path.exists("db.sqlite3")
     if not db_is_created:
         create_database()
     else:
-        os.remove("/run/media/serhappy/Data/Projects/Python/VuzoBot/db.sqlite3")
+        os.remove(f"{config('PROJECT_DIR')}/db.sqlite3")
         create_database()
 
     # Запуск пуллинга

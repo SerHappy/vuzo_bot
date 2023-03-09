@@ -13,7 +13,9 @@ class User(Base):
     telegram_nickname = Column(String(250), nullable=False)
     ege_subjects_number = Column(Integer, default=0)
     ege_total_score = Column(Integer, default=0)
-    ege_subjects = relationship("Subject", secondary=association_user_subject, back_populates="users")
+    ege_subjects = relationship(
+        "Subject", secondary=association_user_subject, back_populates="users"
+    )
 
     def __init__(self, telegram_id: int, telegram_nickname: str) -> None:
         self.telegram_id = telegram_id
@@ -21,4 +23,3 @@ class User(Base):
 
     def __str__(self) -> str:
         return get_default_repr(self.__table__.columns.keys())
-        # return f"Пользователь [Имя: {self.telegram_nickname}, id в Телеграме: {self.telegram_id}, Администратор: {self.is_admin}]"

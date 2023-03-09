@@ -9,12 +9,14 @@ class Subject(Base):
 
     id = Column(Integer, primary_key=True)
     subject_name = Column(String(50), unique=True, nullable=False)
-    users = relationship("User", secondary=association_user_subject, back_populates="ege_subjects")
+    users = relationship(
+        "User",
+        secondary=association_user_subject,
+        back_populates="ege_subjects",
+    )
 
     def __init__(self, subject_name: Column[str]) -> None:
         self.subject_name = subject_name
 
-    # def __str__(self) -> str:
-    #     return f"Предмет [Название: {self.subject_name}]"
     def __str__(self) -> str:
         return get_default_repr(self.__table__.columns.keys())
