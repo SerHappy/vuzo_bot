@@ -3,3 +3,6 @@ nest_asyncio==1.5.5
 python-decouple==3.6
 xlsxwritter==3.0.8
 SQLAlchemy==2.0.1
+beautifulsoup4==4.11.2
+anti-useragent==1.0.10
+selenium==4.8.2

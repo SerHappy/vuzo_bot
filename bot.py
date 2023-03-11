@@ -65,5 +65,8 @@ async def main():
 if __name__ == "__main__":
     # Выполняется запуск бота, только если файл запускается напрямую,
     # а не импортируется
+    from utils.load_universities import get_data
+
+    get_data()
     nest_asyncio.apply()
     asyncio.run(main())

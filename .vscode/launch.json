@@ -4,13 +4,12 @@
     // Для получения дополнительной информации посетите: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "Python: Bot Debug",
-            "type": "python",
-            "request": "launch",
-            "program": "/run/media/serhappy/Data/Projects/Python/VuzoBot/bot.py",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        }
+    {
+        "name":"Python: Debug bot",
+        "type":"python",
+        "request":"launch",
+        "program":"/run/media/serhappy/Data/Projects/Python/VuzoBot/bot.py",
+        "console":"integratedTerminal",
+        "justMyCode":true},
     ]
 }
